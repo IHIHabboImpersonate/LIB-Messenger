@@ -31,23 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NHibernate">
-      <HintPath>..\..\..\..\..\Libs\NHibernate\3.1.0\Required_Bins\NHibernate.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlockFlag.cs" />
     <Compile Include="Category.cs" />
     <Compile Include="Events.cs" />
     <Compile Include="Friend.cs" />
+    <Compile Include="MessengerExtensionMethods.cs" />
     <Compile Include="MessengerObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -61,10 +52,6 @@
       <Project>{DAE1BFF3-35B4-493F-B261-0F050DE43832}</Project>
       <Name>Server</Name>
       <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\PID11_StandardHabboFigures\StandardHabboFigures.csproj">
-      <Project>{1759BA1B-5260-4EED-88D0-4D15728E613C}</Project>
-      <Name>StandardHabboFigures</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

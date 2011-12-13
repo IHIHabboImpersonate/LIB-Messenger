@@ -10,9 +10,9 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         private readonly int _categoryID;
         private readonly List<Friend> _friends;
         private readonly MessengerObject _messenger;
-        private string _name;
 
         private readonly Habbo _owner;
+        private string _name;
 
         public Category(int categoryID, string name, MessengerObject messenger)
         {
@@ -48,6 +48,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         {
             if (!_friends.Contains(friend))
             {
+                _messenger.RemoveFriendRequest(friend);
                 _friends.Add(friend);
 
                 var args = new MessengerFriendEventArgs(friend, FriendUpdateType.Added, this);

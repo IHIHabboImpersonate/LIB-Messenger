@@ -7,12 +7,10 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
     public class MessengerObject
     {
         #region Events
-
-        public event MessengerBlockFlagEventHandler OnMessengerBlockFlagChanged;
-        public event MessengerCategoryEventHandler OnMessengerCategoryChanged;
-        public event MessengerFriendRequestEventHandler OnMessengerFriendRequestReceived;
-        public event MessengerFriendRequestEventHandler OnMessengerFriendRequestSent;
-        public event MessengerFriendEventHandler OnMessengerFriendStateChanged;
+        public event MessengerCategoryEventHandler OnCategoryChanged;
+        public event MessengerFriendRequestEventHandler OnFriendRequestReceived;
+        public event MessengerFriendRequestEventHandler OnFriendRequestRemoved;
+        public event MessengerFriendEventHandler OnFriendStateChanged;
 
         #endregion
 
@@ -21,7 +19,6 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         private readonly IDictionary<int, Category> _categories;
         private readonly ICollection<IBefriendable> _friendRequests;
         private readonly Habbo _owner;
-        private BlockFlag _blockFlags;
 
         #endregion
 
@@ -30,31 +27,15 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         public MessengerObject(Habbo owner)
         {
             _owner = owner;
-            _blockFlags = BlockFlag.None;
             _categories = new Dictionary<int, Category>();
             _friendRequests = new List<IBefriendable>();
 
-            if (owner.GetPersistantVariable("Messenger.StalkBlock") == null)
-                _blockFlags |= BlockFlag.Stalk;
-            if (owner.GetPersistantVariable("Messenger.RequestBlock") == null)
-                _blockFlags |= BlockFlag.Request;
-            if (owner.GetPersistantVariable("Messenger.InviteBlock") == null)
-                _blockFlags |= BlockFlag.Invite;
-        }
-
-        public MessengerObject(Habbo owner, bool isStalkable, bool isRequestable, bool isInviteable)
-        {
-            _owner = owner;
-            _blockFlags = BlockFlag.None;
-            _categories = new Dictionary<int, Category>();
-            _friendRequests = new List<IBefriendable>();
-
-            if (!isStalkable)
-                _blockFlags |= BlockFlag.Stalk;
-            if (!isRequestable)
-                _blockFlags |= BlockFlag.Request;
-            if (!isInviteable)
-                _blockFlags |= BlockFlag.Invite;
+            if (owner.GetPersistantVariable("Messenger.StalkBlock") != null)
+                owner.BlockStalking = true;
+            if (owner.GetPersistantVariable("Messenger.RequestBlock") != null)
+                owner.BlockRequests = true;
+            if (owner.GetPersistantVariable("Messenger.InviteBlock") != null)
+                owner.BlockInvites = true;
         }
 
         #endregion
@@ -99,78 +80,9 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
         internal void InvokeFriendStateChangedEvent(MessengerFriendEventArgs e)
         {
-            if (OnMessengerFriendStateChanged != null)
-                OnMessengerFriendStateChanged.Invoke(this, e);
+            if (OnFriendStateChanged != null)
+                OnFriendStateChanged.Invoke(this, e);
         }
-
-        #region Block Flags
-
-        public bool IsStalkable()
-        {
-            return (_blockFlags & BlockFlag.Stalk) == BlockFlag.Stalk;
-        }
-
-        public bool IsRequestable()
-        {
-            return (_blockFlags & BlockFlag.Request) == BlockFlag.Request;
-        }
-
-        public bool IsInviteable()
-        {
-            return (_blockFlags & BlockFlag.Invite) == BlockFlag.Invite;
-        }
-
-        public MessengerObject SetStalkable(bool value)
-        {
-            if (OnMessengerBlockFlagChanged != null)
-            {
-                var args = new MessengerBlockFlagEventArgs(BlockFlag.Stalk, IsStalkable(), value);
-                OnMessengerBlockFlagChanged.Invoke(this, args);
-            }
-
-
-            if (value)
-                _blockFlags |= BlockFlag.Stalk;
-            else
-                _blockFlags &= ~BlockFlag.Stalk;
-
-            return this;
-        }
-
-        public MessengerObject SetRequestable(bool value)
-        {
-            if (OnMessengerBlockFlagChanged != null)
-            {
-                var args = new MessengerBlockFlagEventArgs(BlockFlag.Request, IsRequestable(), value);
-                OnMessengerBlockFlagChanged.Invoke(this, args);
-            }
-
-
-            if (value)
-                _blockFlags |= BlockFlag.Request;
-            else
-                _blockFlags &= ~BlockFlag.Request;
-            return this;
-        }
-
-        public MessengerObject SetInviteable(bool value)
-        {
-            if (OnMessengerBlockFlagChanged != null)
-            {
-                var args = new MessengerBlockFlagEventArgs(BlockFlag.Invite, IsInviteable(), value);
-                OnMessengerBlockFlagChanged.Invoke(this, args);
-            }
-
-
-            if (value)
-                _blockFlags |= BlockFlag.Invite;
-            else
-                _blockFlags &= ~BlockFlag.Invite;
-            return this;
-        }
-
-        #endregion
-
         #region Categories
 
         public MessengerObject SetCategory(int id, Category category)
@@ -193,22 +105,25 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
                 _categories.Remove(id);
 
 
-            if (OnMessengerCategoryChanged != null)
+            if (OnCategoryChanged != null)
             {
                 var args = new MessengerCategoryEventArgs(id, oldName, newName);
-                OnMessengerCategoryChanged.Invoke(this, args);
+                OnCategoryChanged.Invoke(this, args);
             }
 
             return this;
         }
 
-        public Category GetCategory(int? id)
+        public Category GetCategory(Database.MessengerCategory category)
         {
-            if (id == null)
-                return _categories[0];
-
-            if (_categories.ContainsKey((int) id))
-                return _categories[(int) id];
+            if (category == null)
+                return GetCategory(0);
+            return GetCategory(category.category_id);
+        }
+        public Category GetCategory(int id)
+        {
+            if (_categories.ContainsKey(id))
+                return _categories[id];
             return null;
         }
 
@@ -226,22 +141,37 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
             return _friendRequests.Contains(sender);
         }
 
-        public MessengerObject AddFriendRequest(IBefriendable from)
+        /// <summary>
+        /// Adds a friend request to the messenger.
+        /// </summary>
+        /// <param name="from">The IBefriendable the friend request is from.</param>
+        /// <returns></returns>
+        public MessengerObject NotifyFriendRequest(IBefriendable from)
         {
             if (_friendRequests.Contains(from))
                 return this;
 
-            if (OnMessengerFriendRequestReceived != null)
+            if (OnFriendRequestReceived != null)
             {
-                var args = new MessengerFriendRequestEventArgs(from);
-                OnMessengerFriendRequestReceived.Invoke(this, args);
+                var args = new MessengerFriendRequestEventArgs(from, _owner);
+                OnFriendRequestReceived.Invoke(this, args);
             }
+
             _friendRequests.Add(from);
             return this;
         }
+        public MessengerObject RemoveFriendRequest(IBefriendable from)
+        {
+            if (OnFriendRequestRemoved != null)
+            {
+                var args = new MessengerFriendRequestEventArgs(from, _owner);
+                OnFriendRequestRemoved.Invoke(this, args);
 
+            }
+            _friendRequests.Remove(from);
+            return this;
+        }
         #endregion
-
         #endregion
     }
 }

@@ -1,0 +1,5 @@
+D:\Programming\Retro\IHI\Git\Plugins\PID9_Messenger\bin\Release\LIB-Messenger.dll
+D:\Programming\Retro\IHI\Git\Plugins\PID9_Messenger\bin\Release\LIB-Messenger.pdb
+D:\Programming\Retro\IHI\Git\Plugins\PID9_Messenger\obj\Release\ResolveAssemblyReference.cache
+D:\Programming\Retro\IHI\Git\Plugins\PID9_Messenger\obj\Release\LIB-Messenger.dll
+D:\Programming\Retro\IHI\Git\Plugins\PID9_Messenger\obj\Release\LIB-Messenger.pdb

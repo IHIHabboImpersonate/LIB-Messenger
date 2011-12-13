@@ -4,9 +4,7 @@ using IHI.Server.Habbos;
 namespace IHI.Server.Libraries.Cecer1.Messenger
 {
     public delegate void MessengerEventHandler(object source, MessengerEventArgs e);
-
-    public delegate void MessengerBlockFlagEventHandler(object source, MessengerBlockFlagEventArgs e);
-
+    
     public delegate void MessengerCategoryEventHandler(object source, MessengerCategoryEventArgs e);
 
     public delegate void MessengerFriendRequestEventHandler(object source, MessengerFriendRequestEventArgs e);
@@ -26,45 +24,6 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         public Habbo GetHabbo()
         {
             return _habbo;
-        }
-    }
-
-    public class MessengerBlockFlagEventArgs : EventArgs
-    {
-        private readonly BlockFlag _blockFlag;
-        private readonly bool _newState;
-        private readonly bool _oldState;
-
-        public MessengerBlockFlagEventArgs(BlockFlag blockFlag, bool oldState, bool newState)
-        {
-            _blockFlag = blockFlag;
-            _oldState = oldState;
-            _newState = newState;
-        }
-
-
-        /// <summary>
-        /// Returns the BlockFlag that was effected by this event.
-        /// </summary>
-        public BlockFlag GetBlockFlag()
-        {
-            return _blockFlag;
-        }
-
-        /// <summary>
-        /// Returns the state of the BlockFlag before this event.
-        /// </summary>
-        public bool GetOldState()
-        {
-            return _oldState;
-        }
-
-        /// <summary>
-        /// Returns the state of the BlockFlag after this event.
-        /// </summary>
-        public bool GetNewState()
-        {
-            return _newState;
         }
     }
 
@@ -112,15 +71,22 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
     public class MessengerFriendRequestEventArgs : EventArgs
     {
         private readonly IBefriendable _from;
+        private readonly IBefriendable _to;
 
-        public MessengerFriendRequestEventArgs(IBefriendable from)
+        public MessengerFriendRequestEventArgs(IBefriendable from, IBefriendable to)
         {
             _from = from;
+            _to = to;
         }
 
         public IBefriendable GetFrom()
         {
             return _from;
+        }
+
+        public IBefriendable GetTo()
+        {
+            return _to;
         }
     }
 

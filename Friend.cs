@@ -7,36 +7,22 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
     public struct Friend : IBefriendable
     {
         private readonly IBefriendable _befriendableObject;
-        private readonly bool _isStalkingAllowed;
-        private int _category;
 
-        public Friend(IBefriendable befriendableObject, int category, bool isStalkingAllowed = true)
+        public int Category
+        {
+            get;
+            internal set;
+        }
+
+        public Friend(IBefriendable befriendableObject, int category) : this()
         {
             _befriendableObject = befriendableObject;
-            _isStalkingAllowed = isStalkingAllowed;
-            _category = category;
-        }
-
-        public int GetCategory()
-        {
-            return _category;
-        }
-
-        internal Friend SetCategory(int categoryID)
-        {
-            _category = categoryID;
-            return this;
-        }
-
-        /// <summary>
-        /// Returns true if the IBefriendable allows stalking, false otherwise.
-        /// </summary>
-        public bool IsStalkingAllowed()
-        {
-            return _isStalkingAllowed;
+            Category = category;
         }
 
         #region IBefriendable Methods
+
+        public event MessengerBlockFlagEventHandler OnBlockFlagChanged;
 
         public int GetID()
         {
@@ -71,6 +57,47 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         public Room GetRoom()
         {
             return _befriendableObject.GetRoom();
+        }
+
+        /// <summary>
+        /// Gets/Sets the stalk block flag of the IBefriendable.
+        /// </summary>
+        public bool BlockStalking { get; set; }
+
+        /// <summary>
+        /// Gets/Sets the request block flag of the IBefriendable.
+        /// </summary>
+        public bool BlockRequests { get; set; }
+
+        /// <summary>
+        /// Gets/Sets the invite block flag of the IBefriendable.
+        /// </summary>
+        public bool BlockInvites { get; set; }
+
+        /// <summary>
+        /// Returns true if the IBefriendable can be requested, false otherwise.
+        /// </summary>
+        public bool IsStalkable()
+        {
+            if (GetRoom() == null)
+                return false;
+            return !BlockStalking;
+        }
+
+        /// <summary>
+        /// Returns true if the IBefriendable can be requested, false otherwise.
+        /// </summary>
+        public bool IsRequestable()
+        {
+            return !BlockRequests;
+        }
+
+        /// <summary>
+        /// Returns true if the IBefriendable can be invited, false otherwise.
+        /// </summary>
+        public bool IsInviteable()
+        {
+            return !BlockInvites;
         }
 
         /// <summary>
