@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using IHI.Server.Habbos;
+using IHI.Server.Plugins.Cecer1.MessengerManager;
 
 namespace IHI.Server.Libraries.Cecer1.Messenger
 {
@@ -11,188 +14,274 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         public event MessengerFriendRequestEventHandler OnFriendRequestReceived;
         public event MessengerFriendRequestEventHandler OnFriendRequestRemoved;
         public event MessengerFriendEventHandler OnFriendStateChanged;
-
         #endregion
 
-        #region Fields
-
+        #region Properties
         private readonly IDictionary<int, Category> _categories;
-        private readonly ICollection<IBefriendable> _friendRequests;
-        private readonly Habbo _owner;
+        private readonly IDictionary<int, Friend> _friends;
+        private readonly IDictionary<int, IBefriendable> _friendRequests;
 
+        public Habbo Owner
+        {
+            get;
+            private set;
+        }
         #endregion
 
         #region Constructors
-
         public MessengerObject(Habbo owner)
         {
-            _owner = owner;
             _categories = new Dictionary<int, Category>();
-            _friendRequests = new List<IBefriendable>();
+            _friends = new Dictionary<int, Friend>();
+            _friendRequests = new Dictionary<int, IBefriendable>();
 
-            if (owner.GetPersistantVariable("Messenger.StalkBlock") != null)
-                owner.BlockStalking = true;
-            if (owner.GetPersistantVariable("Messenger.RequestBlock") != null)
-                owner.BlockRequests = true;
-            if (owner.GetPersistantVariable("Messenger.InviteBlock") != null)
-                owner.BlockInvites = true;
+            Owner = owner;
+
+            if (Owner.GetPersistantVariable("Messenger.StalkBlock") != null)
+                Owner.BlockStalking = true;
+            if (Owner.GetPersistantVariable("Messenger.RequestBlock") != null)
+                Owner.BlockRequests = true;
+            if (Owner.GetPersistantVariable("Messenger.InviteBlock") != null)
+                Owner.BlockInvites = true;
+        }
+        #endregion
+
+        #region Methods
+        #region Friends
+        /// <summary>
+        /// Returns an IEnumerable of type Friend containing all Friends in all Categories.
+        /// </summary>
+        public IEnumerable<Friend> GetAllFriends()
+        {
+            return _friends.Values;
+        }
+        /// <summary>
+        /// Check if an IBefriendable is already an friend.
+        /// </summary>
+        /// <param name="befriendable">The IBefriendable to check for.</param>
+        /// <returns>True if befriendable is already a friend, false otherwise.</returns>
+        public bool IsFriend(IBefriendable befriendable)
+        {
+            return _friends.ContainsKey(befriendable.GetID());
+        }
+        /// <summary>
+        /// Get a Friend from an IBefriendable.
+        /// </summary>
+        /// <param name="befriendable">The IBefriendable to return the Friend instance for.</param>
+        /// <returns>The instance of Friend for befriendable. If befriendable is not a friend then null is returned.</returns>
+        public Friend GetFriend(IBefriendable befriendable)
+        {
+            if (!_friends.ContainsKey(befriendable.GetID()))
+                return null;
+            return _friends[befriendable.GetID()];
+
+        }
+        /// <summary>
+        /// Add an IBefriendable as a friend only if the IBefriendable is not already a friend.
+        /// </summary>
+        /// <param name="befriendable">The IBefriendable to add.</param>
+        /// <returns>The instance of MessengerObject this was called on. This allows for chaining.</returns>
+        public MessengerObject AddNewFriend(IBefriendable befriendable)
+        {
+            if (_friends.ContainsKey(befriendable.GetID()))
+                return this;
+            
+            Friend friend = new Friend(befriendable);
+            _friends.Add(befriendable.GetID(), friend);
+
+            return this;
+        }
+
+        public MessengerObject RemoveFriend(Friend friend)
+        {
+            RemoveFriend(friend.Befriendable.GetID());
+            return this;
+        }
+        public MessengerObject RemoveFriend(IBefriendable befriendable)
+        {
+            RemoveFriend(befriendable.GetID());
+            return this;
+        }
+        public MessengerObject RemoveFriend(int friendID)
+        {
+            if (!_friends.ContainsKey(friendID))
+                return this;
+
+            Friend friend = _friends[friendID];
+            foreach (Category category in friend.GetCategories())
+            {
+                RemoveFriendFromCategory(friend, category);
+            }
+            return this;
+        }
+        #endregion
+
+        #region Friend-Category
+        public MessengerObject AddFriendToCategory(Friend friend, Category category)
+        {
+            AddFriendToCategory(friend.Befriendable, category);
+            return this;
+        }
+        public MessengerObject AddFriendToCategory(IBefriendable befriendable, Category category)
+        {
+            if(!_friends.ContainsKey(befriendable.GetID()))
+                return this;
+
+            Friend friend = _friends[befriendable.GetID()];
+
+            if (!friend.Categories.ContainsKey(category.ID))
+                friend.Categories.Add(category.ID, category);
+
+            if (!category.Friends.ContainsKey(befriendable.GetID()))
+                category.Friends.Add(befriendable.GetID(), befriendable);
+            return this;
+        }
+        public MessengerObject RemoveFriendFromCategory(Friend friend, Category category)
+        {
+            RemoveFriendFromCategory(friend.Befriendable.GetID(), category);
+            return this;
+        }
+        public MessengerObject RemoveFriendFromCategory(IBefriendable befriendable, Category category)
+        {
+            RemoveFriendFromCategory(befriendable.GetID(), category);
+            return this;
+        }
+        public MessengerObject RemoveFriendFromCategory(int friendID, Category category)
+        {
+            if (category.Friends.ContainsKey(friendID))
+                category.Friends.Remove(friendID);
+            return this;
         }
 
         #endregion
 
-        #region Methods
-
-        public Habbo GetOwner()
+        #region Categories
+        /// <summary>
+        /// Returns an IEnumerable of type Category containing all Categories.
+        /// </summary>
+        public IEnumerable<Category> GetAllCategories()
         {
-            return _owner;
+            return _categories.Values;
         }
-
-        #region Friends
-        public ICollection<Friend> GetAllFriends()
+        /// <summary>
+        /// Get a Category from an ID.
+        /// </summary>
+        /// <param name="id">The ID of the Category to get.</param>
+        /// <returns>The Category instance for ID. If the Category is not part of this MessengerObject instance then null is returned.</returns>
+        public Category GetCategory(int id)
         {
-            var friends = new HashSet<Friend>();
-
-            foreach (var category in _categories.Values)
+            if(_categories.ContainsKey(id))
+                return _categories[id];
+            return null;
+        }
+        /// <summary>
+        /// Get all Categories with a specific name.
+        /// </summary>
+        /// <param name="name">The name of the Categories.</param>
+        /// <returns>An IEnumerable of type Category containing all the categories with the given name.</returns>
+        public IEnumerable<Category> GetCategories(string name)
+        {
+            foreach (Category category in _categories.Values)
             {
-                friends.UnionWith(category.GetFriends());
+                if(category.Name == name)
+                    yield return category;
             }
-            return friends;
         }
 
         /// <summary>
-        /// Checks all Categories for an instance of IBefriendable EXACTLY matching friend.
+        /// 
         /// </summary>
-        /// <param name="friend">The The IBefriendable to search for.</param>
-        /// <returns>True if a match was found, false otherwise.</returns>
-        public bool IsFriend(IBefriendable friend)
+        /// <param name="category"></param>
+        /// <returns></returns>
+        public MessengerObject AddCategory(Category category)
         {
-            return _categories.Values.Any(c => c.IsFriend(friend));
+            if (_categories.ContainsKey(category.ID))
+                return this;
+            _categories.Add(category.ID, category);
+            return this;
+        }
+        public MessengerObject RemoveCategory(Category category)
+        {
+            RemoveCategory(category.ID);
+            return this;
+        }
+        public MessengerObject RemoveCategory(int id)
+        {
+            if (!_categories.ContainsKey(id))
+                return this;
+            _categories.Remove(id);
+            return this;
         }
 
+        #endregion
+        #region Friend Requests
         /// <summary>
-        /// Checks all Categories for an IBefriendable with the ID matching friendID.
+        /// 
         /// </summary>
-        /// <param name="friendID">The ID to search for.</param>
-        /// <returns>True if a matching ID was found, false otherwise.</returns>
-        public bool IsFriend(int friendID)
+        /// <returns></returns>
+        public IEnumerable<IBefriendable> GetAllFriendRequests()
         {
-            return _categories.Values.Any(c => c.IsFriend(friendID));
+            return _friendRequests.Values;
         }
         /// <summary>
-        /// Checks all Categories for an instance of IBefriendable with a matching ID and returns the category if found.
+        /// Check if there is an outstanding request from an IBefriendable.
         /// </summary>
-        /// <param name="friendID">The IBefriendable ID to search for.</param>
-        /// <returns>The Category instance containing friend if found, null otherwise.</returns>
-        public Category GetCategoryContainingFriend(int friendID)
+        /// <param name="befriendable">The IBefriendable to check for requests from.</param>
+        /// <returns>True if befriendable is already a friend, false otherwise.</returns>
+        public bool IsRequestedBy(IBefriendable befriendable)
         {
-            return _categories.Values.FirstOrDefault(c => c.IsFriend(friendID));
+            return _friendRequests.ContainsKey(befriendable.GetID());
         }
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="befriendable"></param>
+        public MessengerObject ReceiveFriendRequest(IBefriendable befriendable)
+        {
+            if (!_friendRequests.ContainsKey(befriendable.GetID()))
+                return this;
 
-        /// <summary>
-        /// Checks all Categories for an instance of IBefriendable EXACTLY matching friend and returns the category.
-        /// </summary>
-        /// <param name="friend">The The IBefriendable to search for.</param>
-        /// <returns>The Category instance containing friend if found, null otherwise.</returns>
-        public Category GetCategoryContainingFriend(IBefriendable friend)
-        {
-            return _categories.Values.FirstOrDefault(c => c.IsFriend(friend));
-        }
+            _friendRequests.Add(befriendable.GetID(), befriendable);
+            
+            if(OnFriendRequestReceived == null)
+                OnFriendRequestReceived.Invoke(this, new MessengerFriendRequestEventArgs(befriendable, Owner));
 
-        internal void InvokeFriendStateChangedEvent(MessengerFriendEventArgs e)
+            return this;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="befriendable"></param>
+        /// <returns></returns>
+        public MessengerObject RemoveFriendRequest(IBefriendable befriendable)
+        {
+            if (!_friendRequests.ContainsKey(befriendable.GetID()))
+                return this;
+
+            _friendRequests.Remove(befriendable.GetID());
+
+            if (OnFriendRequestRemoved == null)
+                OnFriendRequestRemoved.Invoke(this, new MessengerFriendRequestEventArgs(befriendable, Owner));
+
+            return this;
+        }
+        #endregion
+
+        #region Events
+        internal void InvokeFriendStateChanged(MessengerFriendEventArgs e)
         {
             if (OnFriendStateChanged != null)
                 OnFriendStateChanged.Invoke(this, e);
         }
         #endregion
-        #region Categories
-
-        public MessengerObject SetCategory(int id, Category category)
-        {
-            string oldName = null;
-            string newName = null;
-
-            if (category != null)
-            {
-                newName = category.GetName();
-                if (!_categories.ContainsKey(id))
-                    _categories.Add(id, category);
-                else
-                {
-                    oldName = _categories[id].GetName();
-                    _categories[id] = category;
-                }
-            }
-            else if (_categories.ContainsKey(id))
-                _categories.Remove(id);
-
-
-            if (OnCategoryChanged != null)
-            {
-                var args = new MessengerCategoryEventArgs(id, oldName, newName);
-                OnCategoryChanged.Invoke(this, args);
-            }
-
-            return this;
-        }
-
-        public Category GetCategory(Database.MessengerCategory category)
-        {
-            if (category == null)
-                return GetCategory(0);
-            return GetCategory(category.category_id);
-        }
-        public Category GetCategory(int id)
-        {
-            if (_categories.ContainsKey(id))
-                return _categories[id];
-            return null;
-        }
-
-        public ICollection<Category> GetAllCategories()
-        {
-            return _categories.Values;
-        }
-
         #endregion
 
-        #region Requests
-
-        public bool IsRequestedBy(IBefriendable sender)
+        public MessengerObject SendFriendRequest(IBefriendable befriendable)
         {
-            return _friendRequests.Contains(sender);
-        }
-
-        /// <summary>
-        /// Adds a friend request to the messenger.
-        /// </summary>
-        /// <param name="from">The IBefriendable the friend request is from.</param>
-        /// <returns></returns>
-        public MessengerObject NotifyFriendRequest(IBefriendable from)
-        {
-            if (_friendRequests.Contains(from))
-                return this;
-
-            if (OnFriendRequestReceived != null)
-            {
-                var args = new MessengerFriendRequestEventArgs(from, _owner);
-                OnFriendRequestReceived.Invoke(this, args);
-            }
-
-            _friendRequests.Add(from);
+            MessengerObject messenger = befriendable.GetMessenger();
+            if(messenger != null)
+                messenger.ReceiveFriendRequest(Owner);
             return this;
         }
-        public MessengerObject RemoveFriendRequest(IBefriendable from)
-        {
-            if (OnFriendRequestRemoved != null)
-            {
-                var args = new MessengerFriendRequestEventArgs(from, _owner);
-                OnFriendRequestRemoved.Invoke(this, args);
-
-            }
-            _friendRequests.Remove(from);
-            return this;
-        }
-        #endregion
-        #endregion
     }
 }

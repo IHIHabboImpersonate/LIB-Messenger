@@ -1,144 +1,47 @@
 ﻿using System;
+using System.Collections.Generic;
 using IHI.Server.Habbos;
 using IHI.Server.Rooms;
 
 namespace IHI.Server.Libraries.Cecer1.Messenger
 {
-    public class Friend : IBefriendable
+    public class Friend
     {
-        private readonly IBefriendable _befriendableObject;
-
-        public int Category
+        #region Properties
+        public IBefriendable Befriendable
         {
             get;
-            set;
+            private set;
         }
+        internal IDictionary<int, Category> Categories
+        {
+            get;
+            private set;
+        }
+        #endregion
 
+        #region Constructors
         public Friend(IBefriendable befriendableObject)
         {
-            _befriendableObject = befriendableObject;
+            Befriendable = befriendableObject;
+            Categories = new Dictionary<int, Category>();
         }
+        #endregion
 
-        #region IBefriendable Methods
-        public event MessengerBlockFlagEventHandler OnBlockFlagChanged;
-
-        public int GetID()
+        #region Methods
+        public IEnumerable<Category> GetCategories()
         {
-            return _befriendableObject.GetID();
+            return Categories.Values;
         }
-
-        public bool IsLoggedIn()
+        public Friend AddFriend(Category category)
         {
-            return _befriendableObject.IsLoggedIn();
-        }
-
-        public string GetDisplayName()
-        {
-            return _befriendableObject.GetDisplayName();
-        }
-
-        public string GetMotto()
-        {
-            return _befriendableObject.GetMotto();
-        }
-
-        public DateTime GetLastAccess()
-        {
-            return _befriendableObject.GetLastAccess();
-        }
-
-        public IFigure GetFigure()
-        {
-            return _befriendableObject.GetFigure();
-        }
-
-        public Room GetRoom()
-        {
-            return _befriendableObject.GetRoom();
-        }
-
-        /// <summary>
-        /// Gets/Sets the stalk block flag of the IBefriendable.
-        /// </summary>
-        public bool BlockStalking { get; set; }
-
-        /// <summary>
-        /// Gets/Sets the request block flag of the IBefriendable.
-        /// </summary>
-        public bool BlockRequests { get; set; }
-
-        /// <summary>
-        /// Gets/Sets the invite block flag of the IBefriendable.
-        /// </summary>
-        public bool BlockInvites { get; set; }
-
-        /// <summary>
-        /// Returns true if the IBefriendable can be requested, false otherwise.
-        /// </summary>
-        public bool IsStalkable()
-        {
-            if (GetRoom() == null)
-                return false;
-            return !BlockStalking;
-        }
-
-        /// <summary>
-        /// Returns true if the IBefriendable can be requested, false otherwise.
-        /// </summary>
-        public bool IsRequestable()
-        {
-            return !BlockRequests;
-        }
-
-        /// <summary>
-        /// Returns true if the IBefriendable can be invited, false otherwise.
-        /// </summary>
-        public bool IsInviteable()
-        {
-            return !BlockInvites;
-        }
-
-        /// <summary>
-        /// Warning: This acts on the underlying IBefriendable.
-        /// </summary>
-        public object GetInstanceVariable(string name)
-        {
-            return _befriendableObject.GetInstanceVariable(name);
-        }
-
-        /// <summary>
-        /// Warning: This acts on the underlying IBefriendable.
-        /// </summary>
-        public IInstanceVariables SetInstanceVariable(string name, object value)
-        {
-            _befriendableObject.SetInstanceVariable(name, value);
+            category.Owner.AddFriendToCategory(this, category);
             return this;
         }
-
-        /// <summary>
-        /// Warning: This acts on the underlying IBefriendable.
-        /// </summary>
-        public string GetPersistantVariable(string name)
+        public Friend RemoveFromCategory(Category category)
         {
-            return _befriendableObject.GetPersistantVariable(name);
-        }
-
-        /// <summary>
-        /// Warning: This acts on the underlying IBefriendable.
-        /// </summary>
-        public IPersistantVariables SetPersistantVariable(string name, string value)
-        {
-            _befriendableObject.SetPersistantVariable(name, value);
+            category.Owner.RemoveFriendFromCategory(this, category);
             return this;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return _befriendableObject.Equals(obj);
-        }
-        public override int GetHashCode()
-        {
-            return _befriendableObject.GetHashCode();
         }
         #endregion
     }

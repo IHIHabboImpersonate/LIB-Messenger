@@ -12,7 +12,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
             get;
             set;
         }
-        public IBefriendable Friend
+        public Friend Friend
         {
             get;
             set;
