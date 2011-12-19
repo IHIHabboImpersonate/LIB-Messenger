@@ -47,6 +47,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
             return _owner;
         }
 
+        #region Friends
         public ICollection<Friend> GetAllFriends()
         {
             var friends = new HashSet<Friend>();
@@ -59,7 +60,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         }
 
         /// <summary>
-        /// Checks all Categories for an instance of IBefriendable EXACTLY matching Friend.
+        /// Checks all Categories for an instance of IBefriendable EXACTLY matching friend.
         /// </summary>
         /// <param name="friend">The The IBefriendable to search for.</param>
         /// <returns>True if a match was found, false otherwise.</returns>
@@ -69,7 +70,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         }
 
         /// <summary>
-        /// Checks all Categories for an IBefriendable with the ID matching FriendID.
+        /// Checks all Categories for an IBefriendable with the ID matching friendID.
         /// </summary>
         /// <param name="friendID">The ID to search for.</param>
         /// <returns>True if a matching ID was found, false otherwise.</returns>
@@ -77,12 +78,32 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         {
             return _categories.Values.Any(c => c.IsFriend(friendID));
         }
+        /// <summary>
+        /// Checks all Categories for an instance of IBefriendable with a matching ID and returns the category if found.
+        /// </summary>
+        /// <param name="friendID">The IBefriendable ID to search for.</param>
+        /// <returns>The Category instance containing friend if found, null otherwise.</returns>
+        public Category GetCategoryContainingFriend(int friendID)
+        {
+            return _categories.Values.FirstOrDefault(c => c.IsFriend(friendID));
+        }
+
+        /// <summary>
+        /// Checks all Categories for an instance of IBefriendable EXACTLY matching friend and returns the category.
+        /// </summary>
+        /// <param name="friend">The The IBefriendable to search for.</param>
+        /// <returns>The Category instance containing friend if found, null otherwise.</returns>
+        public Category GetCategoryContainingFriend(IBefriendable friend)
+        {
+            return _categories.Values.FirstOrDefault(c => c.IsFriend(friend));
+        }
 
         internal void InvokeFriendStateChangedEvent(MessengerFriendEventArgs e)
         {
             if (OnFriendStateChanged != null)
                 OnFriendStateChanged.Invoke(this, e);
         }
+        #endregion
         #region Categories
 
         public MessengerObject SetCategory(int id, Category category)

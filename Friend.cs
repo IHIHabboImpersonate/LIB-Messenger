@@ -4,24 +4,22 @@ using IHI.Server.Rooms;
 
 namespace IHI.Server.Libraries.Cecer1.Messenger
 {
-    public struct Friend : IBefriendable
+    public class Friend : IBefriendable
     {
         private readonly IBefriendable _befriendableObject;
 
         public int Category
         {
             get;
-            internal set;
+            set;
         }
 
-        public Friend(IBefriendable befriendableObject, int category) : this()
+        public Friend(IBefriendable befriendableObject)
         {
             _befriendableObject = befriendableObject;
-            Category = category;
         }
 
         #region IBefriendable Methods
-
         public event MessengerBlockFlagEventHandler OnBlockFlagChanged;
 
         public int GetID()
@@ -134,16 +132,14 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
             return this;
         }
 
-        //public override bool Equals(object obj)
-        //{
-        //    if (obj == null)
-        //        return false;
-        //    if (ReferenceEquals(this, obj))
-        //        return base.Equals(obj); // No unintended recursion.
-
-        //    return base.Equals(obj) || fBefriendableObject.Equals(obj);
-        //}
-
+        public override bool Equals(object obj)
+        {
+            return _befriendableObject.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return _befriendableObject.GetHashCode();
+        }
         #endregion
     }
 }

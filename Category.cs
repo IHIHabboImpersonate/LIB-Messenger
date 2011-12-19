@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using IHI.Database;
 using IHI.Server.Habbos;
 using IHIDB = IHI.Database;
 
@@ -8,7 +9,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
     public class Category
     {
         private readonly int _categoryID;
-        private readonly List<Friend> _friends;
+        private readonly Dictionary<int, Friend> _friends;
         private readonly MessengerObject _messenger;
 
         private readonly Habbo _owner;
@@ -18,7 +19,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         {
             _categoryID = categoryID;
             _owner = messenger.GetOwner();
-            _friends = new List<Friend>();
+            _friends = new Dictionary<int, Friend>();
             _name = name;
             _messenger = messenger;
         }
@@ -46,32 +47,75 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
         public Category AddFriend(Friend friend)
         {
-            if (!_friends.Contains(friend))
+            if (!_friends.ContainsKey(friend.GetID()))
             {
                 _messenger.RemoveFriendRequest(friend);
-                _friends.Add(friend);
+                _friends.Add(friend.GetID(), friend);
 
-                var args = new MessengerFriendEventArgs(friend, FriendUpdateType.Added, this);
+                var args = new MessengerFriendEventArgs
+                               {
+                                   Friend = friend,
+                                   Category = this,
+                                   Type = FriendUpdateType.Added
+                               };
                 _messenger.InvokeFriendStateChangedEvent(args);
             }
             return this;
         }
-
         public Category RemoveFriend(Friend friend)
         {
-            if (_friends.Contains(friend))
+            if (_friends.ContainsKey(friend.GetID()))
             {
-                _friends.Remove(friend);
+                _friends.Remove(friend.GetID());
 
-                var args = new MessengerFriendEventArgs(friend, FriendUpdateType.Removed, this);
+                var args = new MessengerFriendEventArgs
+                               {
+                                   Category = this,
+                                   Friend = friend,
+                                   Type = FriendUpdateType.Removed
+                               };
                 _messenger.InvokeFriendStateChangedEvent(args);
+            }
+            return this;
+        }
+        public Category RemoveFriend(int friendID)
+        {
+            if (_friends.ContainsKey(friendID))
+            {
+                Friend removedFriend = _friends[friendID];
+                _friends.Remove(friendID);
+
+                var args = new MessengerFriendEventArgs
+                               {
+                                   Category = this,
+                                   Friend = removedFriend,
+                                   Type = FriendUpdateType.Removed
+                               };
+
+                _messenger.InvokeFriendStateChangedEvent(args);
+                using (var db = CoreManager.ServerCore.GetDatabaseSession())
+                {
+                    db.Delete(db.Get<Database.MessengerFriendship>(friendID));
+                }
             }
             return this;
         }
 
         public IEnumerable<Friend> GetFriends()
         {
-            return _friends;
+            return _friends.Values;
+        }
+        public Friend GetFriend(int friendID)
+        {
+            if(_friends.ContainsKey(friendID))
+                return _friends[friendID];
+            return null;
+        }
+        public Friend GetFriend(IBefriendable friend)
+        {
+            if (_friends.ContainsKey(friend.GetID()))
+                return _friends[friend.GetID()];
+            return null;
         }
 
         /// <summary>
@@ -81,7 +125,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         /// <returns>True if a match was found, false otherwise.</returns>
         public bool IsFriend(IBefriendable friend)
         {
-            return _friends.Any(f => f.Equals(friend));
+            return _friends.ContainsKey(friend.GetID());
         }
 
         /// <summary>
@@ -91,7 +135,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         /// <returns>True if a matching ID was found, false otherwise.</returns>
         public bool IsFriend(int friendID)
         {
-            return _friends.Any(f => f.GetID() == friendID);
+            return _friends.ContainsKey(friendID);
         }
     }
 }

@@ -31,14 +31,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NHibernate, Version=3.1.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Category.cs" />
-    <Compile Include="Events.cs" />
     <Compile Include="Friend.cs" />
+    <Compile Include="FriendUpdateType.cs" />
+    <Compile Include="MessengerCategoryEventArgs.cs" />
+    <Compile Include="MessengerEventArgs.cs" />
     <Compile Include="MessengerExtensionMethods.cs" />
+    <Compile Include="MessengerFriendEventArgs.cs" />
+    <Compile Include="MessengerFriendRequestEventArgs.cs" />
     <Compile Include="MessengerObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

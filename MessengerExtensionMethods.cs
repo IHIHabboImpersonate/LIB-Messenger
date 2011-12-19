@@ -5,9 +5,9 @@ namespace IHI.Server.Plugins.Cecer1.MessengerManager
 {
     public static class MessengerExtensionMethods
     {
-        public static MessengerObject GetMessenger(this Habbo habbo)
+        public static MessengerObject GetMessenger(this IBefriendable friend)
         {
-            return habbo.GetInstanceVariable("Messenger.Instance") as MessengerObject;
+            return friend.GetInstanceVariable("Messenger.Instance") as MessengerObject;
         }
     }
 }
