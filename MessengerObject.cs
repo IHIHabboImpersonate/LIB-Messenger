@@ -115,7 +115,6 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
             return this;
         }
         #endregion
-
         #region Friend-Category
         public MessengerObject AddFriendToCategory(Friend friend, Category category)
         {
@@ -154,7 +153,6 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         }
 
         #endregion
-
         #region Categories
         /// <summary>
         /// Returns an IEnumerable of type Category containing all Categories.
@@ -265,6 +263,13 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
             return this;
         }
+        public MessengerObject SendFriendRequest(IBefriendable befriendable)
+        {
+            MessengerObject messenger = befriendable.GetMessenger();
+            if (messenger != null)
+                messenger.ReceiveFriendRequest(Owner);
+            return this;
+        }
         #endregion
 
         #region Events
@@ -275,13 +280,5 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
         }
         #endregion
         #endregion
-
-        public MessengerObject SendFriendRequest(IBefriendable befriendable)
-        {
-            MessengerObject messenger = befriendable.GetMessenger();
-            if(messenger != null)
-                messenger.ReceiveFriendRequest(Owner);
-            return this;
-        }
     }
 }
