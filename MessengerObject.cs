@@ -60,12 +60,15 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
             Owner = owner;
 
+            // TODO: Fix at later date
+            /*
             if (Owner.GetPersistantVariable("Messenger.StalkBlock") != null)
                 Owner.BlockStalking = true;
             if (Owner.GetPersistantVariable("Messenger.RequestBlock") != null)
                 Owner.BlockRequests = true;
             if (Owner.GetPersistantVariable("Messenger.InviteBlock") != null)
                 Owner.BlockInvites = true;
+             */
         }
 
         #endregion
