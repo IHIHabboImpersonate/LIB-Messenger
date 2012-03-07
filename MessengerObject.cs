@@ -23,7 +23,7 @@
 
 using System.Collections.Generic;
 using IHI.Server.Habbos;
-using IHI.Server.Plugins.Cecer1.MessengerManager;
+using MessengerManager;
 
 #endregion
 

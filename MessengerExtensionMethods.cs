@@ -26,7 +26,7 @@ using IHI.Server.Libraries.Cecer1.Messenger;
 
 #endregion
 
-namespace IHI.Server.Plugins.Cecer1.MessengerManager
+namespace MessengerManager
 {
     public static class MessengerExtensionMethods
     {
