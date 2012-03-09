@@ -288,7 +288,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
             _friendRequests.Add(befriendable.GetID(), befriendable);
 
-            if (OnFriendRequestReceived == null)
+            if (OnFriendRequestReceived != null)
                 OnFriendRequestReceived.Invoke(this, new MessengerFriendRequestEventArgs(befriendable, Owner));
 
             return this;
@@ -305,7 +305,7 @@ namespace IHI.Server.Libraries.Cecer1.Messenger
 
             _friendRequests.Remove(befriendable.GetID());
 
-            if (OnFriendRequestRemoved == null)
+            if (OnFriendRequestRemoved != null)
                 OnFriendRequestRemoved.Invoke(this, new MessengerFriendRequestEventArgs(befriendable, Owner));
 
             return this;
